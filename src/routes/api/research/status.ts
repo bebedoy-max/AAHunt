@@ -1,11 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getAdminClient } from "@/lib/supabase.server";
+import { getAdminClient, isSupabaseConfigured } from "@/lib/supabase.server";
 import { json } from "@/lib/api-response.server";
+
+const emptyStatus = {
+  id: 0,
+  status: "none",
+  started_at: new Date(0).toISOString(),
+  completed_at: null,
+  providers_found: null,
+  providers_updated: null,
+  error_message: null,
+  log: null,
+};
 
 export const Route = createFileRoute("/api/research/status")({
   server: {
     handlers: {
       GET: async () => {
+        if (!isSupabaseConfigured()) return json(emptyStatus);
         try {
           const supabase = getAdminClient();
           const { data: job, error } = await supabase

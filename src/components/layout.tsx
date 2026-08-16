@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, Crosshair, LayoutDashboard, Crown, KeyRound, Tag, Menu, X } from "lucide-react";
+import { Activity, Brain, Crosshair, LayoutDashboard, Crown, KeyRound, Tag, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { href: "/king-of-cheap", label: "King Of Cheap", icon: Crown },
   { href: "/code-hunter", label: "Code Hunter", icon: Tag },
   { href: "/research", label: "Research Jobs", icon: Activity },
+  { href: "/training-engine", label: "Training Engine", icon: Brain },
   { href: "/api-keys", label: "API Keys", icon: KeyRound },
 ];
 

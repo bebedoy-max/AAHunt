@@ -1,5 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+/** True bila kredensial Supabase eksternal sudah tersedia. */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(process.env["EXT_SUPABASE_URL"] && process.env["EXT_SUPABASE_SERVICE_ROLE_KEY"]);
+}
+
 /** Client service-role ke Supabase eksternal milik user. Server-only. */
 export function getAdminClient(): SupabaseClient {
   const url = process.env["EXT_SUPABASE_URL"];

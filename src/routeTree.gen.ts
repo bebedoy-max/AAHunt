@@ -14,6 +14,7 @@ import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as CodeHunterRouteImport } from './routes/code-hunter'
 import { Route as KingOfCheapRouteImport } from './routes/king-of-cheap'
 import { Route as ResearchRouteImport } from './routes/research'
+import { Route as TrainingEngineRouteImport } from './routes/training-engine'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiHealthzRouteImport } from './routes/api/healthz'
 import { Route as ProvidersIdRouteImport } from './routes/providers.$id'
@@ -27,12 +28,17 @@ import { Route as ApiResearchHistoryRouteImport } from './routes/api/research/hi
 import { Route as ApiResearchResetRouteImport } from './routes/api/research/reset'
 import { Route as ApiResearchStatusRouteImport } from './routes/api/research/status'
 import { Route as ApiResearchTriggerRouteImport } from './routes/api/research/trigger'
+import { Route as ApiTrainingSourcesIndexRouteImport } from './routes/api/training-sources/index'
+import { Route as ApiTrainingSourcesLearnAllRouteImport } from './routes/api/training-sources/learn-all'
 import { Route as ApiApiKeysIdIndexRouteImport } from './routes/api/api-keys/$id/index'
 import { Route as ApiApiKeysIdActivateRouteImport } from './routes/api/api-keys/$id/activate'
 import { Route as ApiApiKeysIdDeactivateRouteImport } from './routes/api/api-keys/$id/deactivate'
 import { Route as ApiApiKeysByProviderProviderRouteImport } from './routes/api/api-keys/by-provider/$provider'
 import { Route as ApiCodesResearchIndexRouteImport } from './routes/api/codes/research/index'
 import { Route as ApiCodesResearchStatusRouteImport } from './routes/api/codes/research/status'
+import { Route as ApiPublicCronResearchRouteImport } from './routes/api/public/cron/research'
+import { Route as ApiTrainingSourcesIdIndexRouteImport } from './routes/api/training-sources/$id/index'
+import { Route as ApiTrainingSourcesIdLearnRouteImport } from './routes/api/training-sources/$id/learn'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +63,11 @@ const KingOfCheapRoute = KingOfCheapRouteImport.update({
 const ResearchRoute = ResearchRouteImport.update({
   id: '/research',
   path: '/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainingEngineRoute = TrainingEngineRouteImport.update({
+  id: '/training-engine',
+  path: '/training-engine',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -124,6 +135,17 @@ const ApiResearchTriggerRoute = ApiResearchTriggerRouteImport.update({
   path: '/api/research/trigger',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrainingSourcesIndexRoute = ApiTrainingSourcesIndexRouteImport.update({
+  id: '/api/training-sources/',
+  path: '/api/training-sources/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrainingSourcesLearnAllRoute =
+  ApiTrainingSourcesLearnAllRouteImport.update({
+    id: '/api/training-sources/learn-all',
+    path: '/api/training-sources/learn-all',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiApiKeysIdIndexRoute = ApiApiKeysIdIndexRouteImport.update({
   id: '/api/api-keys/$id/',
   path: '/api/api-keys/$id/',
@@ -155,6 +177,23 @@ const ApiCodesResearchStatusRoute = ApiCodesResearchStatusRouteImport.update({
   path: '/api/codes/research/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronResearchRoute = ApiPublicCronResearchRouteImport.update({
+  id: '/api/public/cron/research',
+  path: '/api/public/cron/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTrainingSourcesIdIndexRoute =
+  ApiTrainingSourcesIdIndexRouteImport.update({
+    id: '/api/training-sources/$id/',
+    path: '/api/training-sources/$id/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTrainingSourcesIdLearnRoute =
+  ApiTrainingSourcesIdLearnRouteImport.update({
+    id: '/api/training-sources/$id/learn',
+    path: '/api/training-sources/$id/learn',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/code-hunter': typeof CodeHunterRoute
   '/king-of-cheap': typeof KingOfCheapRoute
   '/research': typeof ResearchRoute
+  '/training-engine': typeof TrainingEngineRoute
   '/api/health': typeof ApiHealthRoute
   '/api/healthz': typeof ApiHealthzRoute
   '/providers/$id': typeof ProvidersIdRoute
@@ -172,15 +212,20 @@ export interface FileRoutesByFullPath {
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
+  '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys/': typeof ApiApiKeysIndexRoute
   '/api/codes/': typeof ApiCodesIndexRoute
   '/api/providers/': typeof ApiProvidersIndexRoute
+  '/api/training-sources/': typeof ApiTrainingSourcesIndexRoute
   '/api/api-keys/$id/activate': typeof ApiApiKeysIdActivateRoute
   '/api/api-keys/$id/deactivate': typeof ApiApiKeysIdDeactivateRoute
   '/api/api-keys/by-provider/$provider': typeof ApiApiKeysByProviderProviderRoute
   '/api/codes/research/status': typeof ApiCodesResearchStatusRoute
+  '/api/public/cron/research': typeof ApiPublicCronResearchRoute
+  '/api/training-sources/$id/learn': typeof ApiTrainingSourcesIdLearnRoute
   '/api/api-keys/$id/': typeof ApiApiKeysIdIndexRoute
   '/api/codes/research/': typeof ApiCodesResearchIndexRoute
+  '/api/training-sources/$id/': typeof ApiTrainingSourcesIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -188,6 +233,7 @@ export interface FileRoutesByTo {
   '/code-hunter': typeof CodeHunterRoute
   '/king-of-cheap': typeof KingOfCheapRoute
   '/research': typeof ResearchRoute
+  '/training-engine': typeof TrainingEngineRoute
   '/api/health': typeof ApiHealthRoute
   '/api/healthz': typeof ApiHealthzRoute
   '/providers/$id': typeof ProvidersIdRoute
@@ -198,15 +244,20 @@ export interface FileRoutesByTo {
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
+  '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys': typeof ApiApiKeysIndexRoute
   '/api/codes': typeof ApiCodesIndexRoute
   '/api/providers': typeof ApiProvidersIndexRoute
+  '/api/training-sources': typeof ApiTrainingSourcesIndexRoute
   '/api/api-keys/$id/activate': typeof ApiApiKeysIdActivateRoute
   '/api/api-keys/$id/deactivate': typeof ApiApiKeysIdDeactivateRoute
   '/api/api-keys/by-provider/$provider': typeof ApiApiKeysByProviderProviderRoute
   '/api/codes/research/status': typeof ApiCodesResearchStatusRoute
+  '/api/public/cron/research': typeof ApiPublicCronResearchRoute
+  '/api/training-sources/$id/learn': typeof ApiTrainingSourcesIdLearnRoute
   '/api/api-keys/$id': typeof ApiApiKeysIdIndexRoute
   '/api/codes/research': typeof ApiCodesResearchIndexRoute
+  '/api/training-sources/$id': typeof ApiTrainingSourcesIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -215,6 +266,7 @@ export interface FileRoutesById {
   '/code-hunter': typeof CodeHunterRoute
   '/king-of-cheap': typeof KingOfCheapRoute
   '/research': typeof ResearchRoute
+  '/training-engine': typeof TrainingEngineRoute
   '/api/health': typeof ApiHealthRoute
   '/api/healthz': typeof ApiHealthzRoute
   '/providers/$id': typeof ProvidersIdRoute
@@ -225,15 +277,20 @@ export interface FileRoutesById {
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
+  '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys/': typeof ApiApiKeysIndexRoute
   '/api/codes/': typeof ApiCodesIndexRoute
   '/api/providers/': typeof ApiProvidersIndexRoute
+  '/api/training-sources/': typeof ApiTrainingSourcesIndexRoute
   '/api/api-keys/$id/activate': typeof ApiApiKeysIdActivateRoute
   '/api/api-keys/$id/deactivate': typeof ApiApiKeysIdDeactivateRoute
   '/api/api-keys/by-provider/$provider': typeof ApiApiKeysByProviderProviderRoute
   '/api/codes/research/status': typeof ApiCodesResearchStatusRoute
+  '/api/public/cron/research': typeof ApiPublicCronResearchRoute
+  '/api/training-sources/$id/learn': typeof ApiTrainingSourcesIdLearnRoute
   '/api/api-keys/$id/': typeof ApiApiKeysIdIndexRoute
   '/api/codes/research/': typeof ApiCodesResearchIndexRoute
+  '/api/training-sources/$id/': typeof ApiTrainingSourcesIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -243,6 +300,7 @@ export interface FileRouteTypes {
     | '/code-hunter'
     | '/king-of-cheap'
     | '/research'
+    | '/training-engine'
     | '/api/health'
     | '/api/healthz'
     | '/providers/$id'
@@ -253,15 +311,20 @@ export interface FileRouteTypes {
     | '/api/research/reset'
     | '/api/research/status'
     | '/api/research/trigger'
+    | '/api/training-sources/learn-all'
     | '/api/api-keys/'
     | '/api/codes/'
     | '/api/providers/'
+    | '/api/training-sources/'
     | '/api/api-keys/$id/activate'
     | '/api/api-keys/$id/deactivate'
     | '/api/api-keys/by-provider/$provider'
     | '/api/codes/research/status'
+    | '/api/public/cron/research'
+    | '/api/training-sources/$id/learn'
     | '/api/api-keys/$id/'
     | '/api/codes/research/'
+    | '/api/training-sources/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -269,6 +332,7 @@ export interface FileRouteTypes {
     | '/code-hunter'
     | '/king-of-cheap'
     | '/research'
+    | '/training-engine'
     | '/api/health'
     | '/api/healthz'
     | '/providers/$id'
@@ -279,15 +343,20 @@ export interface FileRouteTypes {
     | '/api/research/reset'
     | '/api/research/status'
     | '/api/research/trigger'
+    | '/api/training-sources/learn-all'
     | '/api/api-keys'
     | '/api/codes'
     | '/api/providers'
+    | '/api/training-sources'
     | '/api/api-keys/$id/activate'
     | '/api/api-keys/$id/deactivate'
     | '/api/api-keys/by-provider/$provider'
     | '/api/codes/research/status'
+    | '/api/public/cron/research'
+    | '/api/training-sources/$id/learn'
     | '/api/api-keys/$id'
     | '/api/codes/research'
+    | '/api/training-sources/$id'
   id:
     | '__root__'
     | '/'
@@ -295,6 +364,7 @@ export interface FileRouteTypes {
     | '/code-hunter'
     | '/king-of-cheap'
     | '/research'
+    | '/training-engine'
     | '/api/health'
     | '/api/healthz'
     | '/providers/$id'
@@ -305,15 +375,20 @@ export interface FileRouteTypes {
     | '/api/research/reset'
     | '/api/research/status'
     | '/api/research/trigger'
+    | '/api/training-sources/learn-all'
     | '/api/api-keys/'
     | '/api/codes/'
     | '/api/providers/'
+    | '/api/training-sources/'
     | '/api/api-keys/$id/activate'
     | '/api/api-keys/$id/deactivate'
     | '/api/api-keys/by-provider/$provider'
     | '/api/codes/research/status'
+    | '/api/public/cron/research'
+    | '/api/training-sources/$id/learn'
     | '/api/api-keys/$id/'
     | '/api/codes/research/'
+    | '/api/training-sources/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,6 +397,7 @@ export interface RootRouteChildren {
   CodeHunterRoute: typeof CodeHunterRoute
   KingOfCheapRoute: typeof KingOfCheapRoute
   ResearchRoute: typeof ResearchRoute
+  TrainingEngineRoute: typeof TrainingEngineRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiHealthzRoute: typeof ApiHealthzRoute
   ProvidersIdRoute: typeof ProvidersIdRoute
@@ -332,15 +408,20 @@ export interface RootRouteChildren {
   ApiResearchResetRoute: typeof ApiResearchResetRoute
   ApiResearchStatusRoute: typeof ApiResearchStatusRoute
   ApiResearchTriggerRoute: typeof ApiResearchTriggerRoute
+  ApiTrainingSourcesLearnAllRoute: typeof ApiTrainingSourcesLearnAllRoute
   ApiApiKeysIndexRoute: typeof ApiApiKeysIndexRoute
   ApiCodesIndexRoute: typeof ApiCodesIndexRoute
   ApiProvidersIndexRoute: typeof ApiProvidersIndexRoute
+  ApiTrainingSourcesIndexRoute: typeof ApiTrainingSourcesIndexRoute
   ApiApiKeysIdActivateRoute: typeof ApiApiKeysIdActivateRoute
   ApiApiKeysIdDeactivateRoute: typeof ApiApiKeysIdDeactivateRoute
   ApiApiKeysByProviderProviderRoute: typeof ApiApiKeysByProviderProviderRoute
   ApiCodesResearchStatusRoute: typeof ApiCodesResearchStatusRoute
+  ApiPublicCronResearchRoute: typeof ApiPublicCronResearchRoute
+  ApiTrainingSourcesIdLearnRoute: typeof ApiTrainingSourcesIdLearnRoute
   ApiApiKeysIdIndexRoute: typeof ApiApiKeysIdIndexRoute
   ApiCodesResearchIndexRoute: typeof ApiCodesResearchIndexRoute
+  ApiTrainingSourcesIdIndexRoute: typeof ApiTrainingSourcesIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -378,6 +459,13 @@ declare module '@tanstack/react-router' {
       path: '/research'
       fullPath: '/research'
       preLoaderRoute: typeof ResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/training-engine': {
+      id: '/training-engine'
+      path: '/training-engine'
+      fullPath: '/training-engine'
+      preLoaderRoute: typeof TrainingEngineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -471,6 +559,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResearchTriggerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/training-sources/': {
+      id: '/api/training-sources/'
+      path: '/api/training-sources'
+      fullPath: '/api/training-sources/'
+      preLoaderRoute: typeof ApiTrainingSourcesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/training-sources/learn-all': {
+      id: '/api/training-sources/learn-all'
+      path: '/api/training-sources/learn-all'
+      fullPath: '/api/training-sources/learn-all'
+      preLoaderRoute: typeof ApiTrainingSourcesLearnAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/api-keys/$id/': {
       id: '/api/api-keys/$id/'
       path: '/api/api-keys/$id'
@@ -513,6 +615,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCodesResearchStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/research': {
+      id: '/api/public/cron/research'
+      path: '/api/public/cron/research'
+      fullPath: '/api/public/cron/research'
+      preLoaderRoute: typeof ApiPublicCronResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/training-sources/$id/': {
+      id: '/api/training-sources/$id/'
+      path: '/api/training-sources/$id'
+      fullPath: '/api/training-sources/$id/'
+      preLoaderRoute: typeof ApiTrainingSourcesIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/training-sources/$id/learn': {
+      id: '/api/training-sources/$id/learn'
+      path: '/api/training-sources/$id/learn'
+      fullPath: '/api/training-sources/$id/learn'
+      preLoaderRoute: typeof ApiTrainingSourcesIdLearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -522,6 +645,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodeHunterRoute: CodeHunterRoute,
   KingOfCheapRoute: KingOfCheapRoute,
   ResearchRoute: ResearchRoute,
+  TrainingEngineRoute: TrainingEngineRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiHealthzRoute: ApiHealthzRoute,
   ProvidersIdRoute: ProvidersIdRoute,
@@ -532,15 +656,20 @@ const rootRouteChildren: RootRouteChildren = {
   ApiResearchResetRoute: ApiResearchResetRoute,
   ApiResearchStatusRoute: ApiResearchStatusRoute,
   ApiResearchTriggerRoute: ApiResearchTriggerRoute,
+  ApiTrainingSourcesLearnAllRoute: ApiTrainingSourcesLearnAllRoute,
   ApiApiKeysIndexRoute: ApiApiKeysIndexRoute,
   ApiCodesIndexRoute: ApiCodesIndexRoute,
   ApiProvidersIndexRoute: ApiProvidersIndexRoute,
+  ApiTrainingSourcesIndexRoute: ApiTrainingSourcesIndexRoute,
   ApiApiKeysIdActivateRoute: ApiApiKeysIdActivateRoute,
   ApiApiKeysIdDeactivateRoute: ApiApiKeysIdDeactivateRoute,
   ApiApiKeysByProviderProviderRoute: ApiApiKeysByProviderProviderRoute,
   ApiCodesResearchStatusRoute: ApiCodesResearchStatusRoute,
+  ApiPublicCronResearchRoute: ApiPublicCronResearchRoute,
+  ApiTrainingSourcesIdLearnRoute: ApiTrainingSourcesIdLearnRoute,
   ApiApiKeysIdIndexRoute: ApiApiKeysIdIndexRoute,
   ApiCodesResearchIndexRoute: ApiCodesResearchIndexRoute,
+  ApiTrainingSourcesIdIndexRoute: ApiTrainingSourcesIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

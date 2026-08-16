@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { geminiGenerate, withTimeout } from "./gemini-model.server";
 import { jsonrepair } from "jsonrepair";
 import { getAdminClient } from "../supabase.server";
 import {
@@ -684,13 +684,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
       provId: string, key: string, queries: string[], prompt: string,
     ): Promise<string> {
       if (provId === "gemini") {
-        const genai = new GoogleGenAI({ apiKey: key });
-        const resp = await genai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          config: { tools: [{ googleSearch: {} }], maxOutputTokens: 16384 },
-        });
-        return resp.text ?? "";
+        return geminiGenerate(key, { prompt, googleSearch: true });
       } else if (provId === "tavily") return researchWithTavily(key, queries);
       else if (provId === "exa") return researchWithExa(key, queries);
       else if (provId === "firecrawl") return researchWithFirecrawl(key, queries);
@@ -707,7 +701,11 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
         const { p, k, label } = entry;
         try {
           await appendLog(`[${waveLabel}] Trying research key ${i + 1}/${orderedProviders.length}: ${label}...`);
-          const text = await callResearchProvider(p, k, queries, prompt);
+          const text = await withTimeout(
+            callResearchProvider(p, k, queries, prompt),
+            180_000,
+            `${label} research call`,
+          );
           if (text.trim()) {
             await appendLog(`[${waveLabel}] Success with ${label} (${text.length.toLocaleString()} chars)`);
             return text;
@@ -826,16 +824,33 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
     let uniqueProviders: ResearchResult[] = [];
 
     if (runProviders) {
+      const { getTrainingContext } = await import("../training/training-sources.server");
+      const training = await getTrainingContext(
+        includeContent
+          ? ["provider_aggregator", "blog_tutorial", "social_media", "news"]
+          : ["provider_aggregator"],
+      );
+      if (training.sourceCount > 0) {
+        await appendLog(
+          `Training Engine: ${training.sourceCount} sumber terlatih dipakai + ${training.queries.length} query hasil belajar`,
+        );
+      } else {
+        await appendLog("Training Engine: belum ada sumber terlatih — memakai prompt bawaan");
+      }
+      const withTraining = (prompt: string) => (training.context ? `${prompt}\n${training.context}` : prompt);
+      const withQueries = (queries: string[]) =>
+        training.queries.length > 0 ? [...training.queries, ...queries] : queries;
+
       await appendLog(`Wave 1/3: Researching Western & mainstream providers via ${activeResearchProvider} (with fallback)...`);
-      const wave1Text = await researchWithFallback(SEARCH_QUERIES_WAVE1, RESEARCH_PROMPT_WAVE1, "Wave 1");
+      const wave1Text = await researchWithFallback(withQueries(SEARCH_QUERIES_WAVE1), withTraining(RESEARCH_PROMPT_WAVE1), "Wave 1");
       await appendLog(`Wave 1 complete — ${wave1Text.length.toLocaleString()} chars`, 15);
 
       await appendLog(`Wave 2/3: Researching Asian, Russian, European & emerging providers via ${activeResearchProvider} (with fallback)...`);
-      const wave2Text = await researchWithFallback(SEARCH_QUERIES_WAVE2, RESEARCH_PROMPT_WAVE2, "Wave 2");
+      const wave2Text = await researchWithFallback(withQueries(SEARCH_QUERIES_WAVE2), withTraining(RESEARCH_PROMPT_WAVE2), "Wave 2");
       await appendLog(`Wave 2 complete — ${wave2Text.length.toLocaleString()} chars`, 28);
 
       await appendLog(`Wave 3/3: Researching end-user SaaS AI tools & applications via ${activeResearchProvider} (with fallback)...`);
-      const wave3Text = await researchWithFallback(SEARCH_QUERIES_WAVE3, RESEARCH_PROMPT_WAVE3, "Wave 3");
+      const wave3Text = await researchWithFallback(withQueries(SEARCH_QUERIES_WAVE3), withTraining(RESEARCH_PROMPT_WAVE3), "Wave 3");
       await appendLog(`Wave 3 complete — ${wave3Text.length.toLocaleString()} chars. Total: ${(wave1Text.length + wave2Text.length + wave3Text.length).toLocaleString()} chars`, 40);
 
       await appendLog(`Phase 2a: Structuring Wave 1 via ${activeStructureProvider} (with fallback)...`);
@@ -1070,13 +1085,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
       try {
         let text = "";
         if (p === "gemini") {
-          const genai = new GoogleGenAI({ apiKey: k });
-          const resp = await genai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            config: { tools: [{ googleSearch: {} }], maxOutputTokens: 16384 },
-          });
-          text = resp.text ?? "";
+          text = await geminiGenerate(k, { prompt, googleSearch: true });
         } else if (p === "tavily") {
           text = await researchWithTavily(k, queries);
         } else if (p === "exa") {
@@ -1102,16 +1111,26 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
     return "";
   }
 
+  const { getTrainingContext } = await import("../training/training-sources.server");
+  const codeTraining = await getTrainingContext(["promo_code", "social_media", "blog_tutorial"]);
+  if (codeTraining.sourceCount > 0) {
+    await appendLog?.(
+      `Training Engine: ${codeTraining.sourceCount} sumber terlatih dipakai untuk code hunting + ${codeTraining.queries.length} query hasil belajar`,
+    );
+  }
+  const withT = (p: string) => (codeTraining.context ? `${p}\n${codeTraining.context}` : p);
+  const withQ = (q: string[]) => (codeTraining.queries.length > 0 ? [...codeTraining.queries, ...q] : q);
+
   await appendLog?.("Code Research: running Wave A (Coupon Sites)...");
-  const textA = await runWave(CODE_PROMPT_COUPON_SITES, CODE_QUERIES_COUPON_SITES, "A (Coupon Sites)");
+  const textA = await runWave(withT(CODE_PROMPT_COUPON_SITES), withQ(CODE_QUERIES_COUPON_SITES), "A (Coupon Sites)");
   await sleep(3000);
 
   await appendLog?.("Code Research: running Wave B (Community/Reddit/YouTube)...");
-  const textB = await runWave(CODE_PROMPT_COMMUNITY, CODE_QUERIES_COMMUNITY, "B (Community/Reddit/YouTube)");
+  const textB = await runWave(withT(CODE_PROMPT_COMMUNITY), withQ(CODE_QUERIES_COMMUNITY), "B (Community/Reddit/YouTube)");
   await sleep(3000);
 
   await appendLog?.("Code Research: running Wave C (Official/Newsletters)...");
-  const textC = await runWave(CODE_PROMPT_OFFICIAL, CODE_QUERIES_OFFICIAL, "C (Official/Newsletters)");
+  const textC = await runWave(withT(CODE_PROMPT_OFFICIAL), withQ(CODE_QUERIES_OFFICIAL), "C (Official/Newsletters)");
 
   const allText = [
     textA ? `\n\n=== WAVE A: COUPON AGGREGATOR SITES ===\n${textA}` : "",
@@ -1162,13 +1181,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
         await appendLog?.(`Code Research: structuring with ${label}...`);
         let raw = "";
         if (p === "gemini") {
-          const genai = new GoogleGenAI({ apiKey: k });
-          const resp = await genai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: structurePrompt }] }],
-            config: { responseMimeType: "application/json", maxOutputTokens: 16384 },
-          });
-          raw = resp.text ?? "";
+          raw = await geminiGenerate(k, { prompt: structurePrompt, json: true });
         } else {
           const endpoint =
             p === "openai" ? "https://api.openai.com/v1/chat/completions" :

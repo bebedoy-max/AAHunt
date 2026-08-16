@@ -76,3 +76,26 @@ alter table public.research_jobs enable row level security;
 alter table public.api_keys enable row level security;
 -- No policies defined: all access goes through the service-role client on the
 -- server; nothing is readable/writable directly from the browser (anon/auth).
+
+-- ─── Training Engine: sumber pembelajaran AI researcher ──────────────────────
+create table if not exists public.training_sources (
+  id serial primary key,
+  url text not null,
+  category text not null,
+  label text,
+  notes text,
+  is_active boolean not null default true,
+  status text not null default 'pending',
+  site_name text,
+  summary text,
+  knowledge text,
+  content_chars integer,
+  error_message text,
+  last_learned_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (url, category)
+);
+
+grant all on public.training_sources to service_role;
+grant usage, select on all sequences in schema public to service_role;
+alter table public.training_sources enable row level security;

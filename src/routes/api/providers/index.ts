@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getAdminClient } from "@/lib/supabase.server";
+import { getAdminClient, isSupabaseConfigured } from "@/lib/supabase.server";
 import { json } from "@/lib/api-response.server";
 
 export const Route = createFileRoute("/api/providers/")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        if (!isSupabaseConfigured()) return json([]);
         try {
           const url = new URL(request.url);
           const category = url.searchParams.get("category");

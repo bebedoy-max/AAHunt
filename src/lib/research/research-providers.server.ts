@@ -15,6 +15,7 @@
  */
 
 import { GoogleGenAI, Type } from "@google/genai";
+import { geminiGenerate } from "./gemini-model.server";
 import { jsonrepair } from "jsonrepair";
 import type { ResearchResult } from "./gemini-research.server";
 
@@ -60,13 +61,7 @@ export async function researchWithGemini(
   apiKey: string,
   prompt: string,
 ): Promise<string> {
-  const genai = new GoogleGenAI({ apiKey });
-  const response = await genai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: { tools: [{ googleSearch: {} }], maxOutputTokens: 16384 },
-  });
-  return response.text ?? "";
+  return geminiGenerate(apiKey, { prompt, googleSearch: true });
 }
 
 // ─── Tavily research ──────────────────────────────────────────────────────────
@@ -333,17 +328,9 @@ export async function structureWithGemini(
   researchText: string,
   waveLabel: string,
 ): Promise<ResearchResult[]> {
-  const genai = new GoogleGenAI({ apiKey });
   const prompt = `${STRUCTURE_SYSTEM_PROMPT}\n\n${STRUCTURE_SCHEMA_TEXT}\n\n=== ${waveLabel} ===\n${researchText}`;
-  const response = await genai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      maxOutputTokens: 65536,
-    },
-  });
-  return parseJsonSafe(response.text ?? "");
+  const raw = await geminiGenerate(apiKey, { prompt, json: true, maxOutputTokens: 65536 });
+  return parseJsonSafe(raw);
 }
 
 // ─── Groq structuring ────────────────────────────────────────────────────────

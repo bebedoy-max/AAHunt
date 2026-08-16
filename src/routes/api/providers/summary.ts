@@ -1,11 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getAdminClient } from "@/lib/supabase.server";
+import { getAdminClient, isSupabaseConfigured } from "@/lib/supabase.server";
 import { json } from "@/lib/api-response.server";
 
 export const Route = createFileRoute("/api/providers/summary")({
   server: {
     handlers: {
       GET: async () => {
+        if (!isSupabaseConfigured()) {
+          return json({
+            total_providers: 0,
+            kling_providers: 0,
+            active_providers: 0,
+            no_credit_card_required: 0,
+            categories: [],
+            last_research_at: null,
+          });
+        }
         try {
           const supabase = getAdminClient();
           const { data: all, error } = await supabase.from("providers").select("*");
