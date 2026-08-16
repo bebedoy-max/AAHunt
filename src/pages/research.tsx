@@ -9,11 +9,12 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Terminal, Activity, Loader2, CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, Database, Tag, FileText, Trash2 } from "lucide-react";
+import { Terminal, Activity, Loader2, CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, Database, Tag, FileText, Trash2, Square } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 const TARGET_OPTIONS = [
   {
@@ -90,6 +91,29 @@ export default function ResearchPage() {
     },
   });
 
+  const stopResearch = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/research/stop", { method: "POST" });
+      if (!res.ok) throw new Error("stop failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Research dihentikan",
+        description: "Proses research yang sedang berjalan sudah dihentikan.",
+      });
+      queryClient.invalidateQueries({ queryKey: getGetResearchStatusQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetResearchHistoryQueryKey() });
+    },
+    onError: () => {
+      toast({
+        title: "Gagal menghentikan research",
+        description: "Terjadi kesalahan. Coba lagi.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: currentStatus, isLoading: isStatusLoading } = useGetResearchStatus({
     query: {
       queryKey: getGetResearchStatusQueryKey(),
@@ -117,7 +141,11 @@ export default function ResearchPage() {
   const lastMarker = progressMarkers[progressMarkers.length - 1];
   const parsedPct = lastMarker ? Number(lastMarker[1]) : 0;
   const progressPct =
-    currentStatus?.status === "completed" ? 100 : isRunning ? Math.max(parsedPct, 1) : parsedPct;
+    currentStatus?.status === "completed"
+      ? 100
+      : isRunning
+      ? Math.max(parsedPct, 1)
+      : 0;
   // Newest first so the latest progress is always visible at the top
   const logLines = rawLines.filter((l) => !/^@@PROGRESS:\d+@@$/.test(l)).reverse();
 
@@ -265,25 +293,37 @@ export default function ResearchPage() {
                 })}
               </div>
 
-              <Button
-                size="lg"
-                onClick={handleTrigger}
-                disabled={isRunning || triggerResearch.isPending || selectedTargets.length === 0}
-                className="w-full mt-4 font-bold tracking-wider relative overflow-hidden group"
-              >
-                {isRunning ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    SCAN IN PROGRESS...
-                  </>
-                ) : (
-                  <>
-                    <Activity className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                    MULAI SCAN ({selectedTargets.length} target)
-                  </>
-                )}
-                {isRunning && <div className="absolute inset-0 bg-primary/20 animate-pulse" />}
-              </Button>
+              {isRunning ? (
+                <Button
+                  size="lg"
+                  variant="destructive"
+                  onClick={() => stopResearch.mutate()}
+                  disabled={stopResearch.isPending}
+                  className="w-full mt-4 font-bold tracking-wider"
+                >
+                  {stopResearch.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      STOPPING...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-5 h-5 mr-2" />
+                      STOP RESEARCH
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  onClick={handleTrigger}
+                  disabled={triggerResearch.isPending || selectedTargets.length === 0}
+                  className="w-full mt-4 font-bold tracking-wider relative overflow-hidden group"
+                >
+                  <Activity className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                  MULAI SCAN ({selectedTargets.length} target)
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -307,7 +347,13 @@ export default function ResearchPage() {
             <div className="bg-black/40 border-b border-border/50 px-4 py-2.5">
               <div className="flex items-center justify-between text-xs font-mono mb-1.5">
                 <span className="text-muted-foreground">
-                  {isRunning ? "Research progress" : currentStatus?.status === "completed" ? "Finished" : "Idle"}
+                  {isRunning
+                    ? "Research progress"
+                    : currentStatus?.status === "completed"
+                    ? "Finished"
+                    : currentStatus?.status === "failed"
+                    ? "Stopped"
+                    : "Idle"}
                 </span>
                 <span className="text-primary font-bold">{progressPct}%</span>
               </div>

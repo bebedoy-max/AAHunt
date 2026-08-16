@@ -27,6 +27,7 @@ import { Route as ApiProvidersSummaryRouteImport } from './routes/api/providers/
 import { Route as ApiResearchHistoryRouteImport } from './routes/api/research/history'
 import { Route as ApiResearchResetRouteImport } from './routes/api/research/reset'
 import { Route as ApiResearchStatusRouteImport } from './routes/api/research/status'
+import { Route as ApiResearchStopRouteImport } from './routes/api/research/stop'
 import { Route as ApiResearchTriggerRouteImport } from './routes/api/research/trigger'
 import { Route as ApiTrainingSourcesIndexRouteImport } from './routes/api/training-sources/index'
 import { Route as ApiTrainingSourcesLearnAllRouteImport } from './routes/api/training-sources/learn-all'
@@ -130,6 +131,11 @@ const ApiResearchStatusRoute = ApiResearchStatusRouteImport.update({
   path: '/api/research/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiResearchStopRoute = ApiResearchStopRouteImport.update({
+  id: '/api/research/stop',
+  path: '/api/research/stop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiResearchTriggerRoute = ApiResearchTriggerRouteImport.update({
   id: '/api/research/trigger',
   path: '/api/research/trigger',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/api/research/history': typeof ApiResearchHistoryRoute
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
+  '/api/research/stop': typeof ApiResearchStopRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
   '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys/': typeof ApiApiKeysIndexRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/api/research/history': typeof ApiResearchHistoryRoute
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
+  '/api/research/stop': typeof ApiResearchStopRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
   '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys': typeof ApiApiKeysIndexRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/api/research/history': typeof ApiResearchHistoryRoute
   '/api/research/reset': typeof ApiResearchResetRoute
   '/api/research/status': typeof ApiResearchStatusRoute
+  '/api/research/stop': typeof ApiResearchStopRoute
   '/api/research/trigger': typeof ApiResearchTriggerRoute
   '/api/training-sources/learn-all': typeof ApiTrainingSourcesLearnAllRoute
   '/api/api-keys/': typeof ApiApiKeysIndexRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/research/history'
     | '/api/research/reset'
     | '/api/research/status'
+    | '/api/research/stop'
     | '/api/research/trigger'
     | '/api/training-sources/learn-all'
     | '/api/api-keys/'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/api/research/history'
     | '/api/research/reset'
     | '/api/research/status'
+    | '/api/research/stop'
     | '/api/research/trigger'
     | '/api/training-sources/learn-all'
     | '/api/api-keys'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/api/research/history'
     | '/api/research/reset'
     | '/api/research/status'
+    | '/api/research/stop'
     | '/api/research/trigger'
     | '/api/training-sources/learn-all'
     | '/api/api-keys/'
@@ -407,6 +419,7 @@ export interface RootRouteChildren {
   ApiResearchHistoryRoute: typeof ApiResearchHistoryRoute
   ApiResearchResetRoute: typeof ApiResearchResetRoute
   ApiResearchStatusRoute: typeof ApiResearchStatusRoute
+  ApiResearchStopRoute: typeof ApiResearchStopRoute
   ApiResearchTriggerRoute: typeof ApiResearchTriggerRoute
   ApiTrainingSourcesLearnAllRoute: typeof ApiTrainingSourcesLearnAllRoute
   ApiApiKeysIndexRoute: typeof ApiApiKeysIndexRoute
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiResearchStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/research/stop': {
+      id: '/api/research/stop'
+      path: '/api/research/stop'
+      fullPath: '/api/research/stop'
+      preLoaderRoute: typeof ApiResearchStopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/research/trigger': {
       id: '/api/research/trigger'
       path: '/api/research/trigger'
@@ -655,6 +675,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiResearchHistoryRoute: ApiResearchHistoryRoute,
   ApiResearchResetRoute: ApiResearchResetRoute,
   ApiResearchStatusRoute: ApiResearchStatusRoute,
+  ApiResearchStopRoute: ApiResearchStopRoute,
   ApiResearchTriggerRoute: ApiResearchTriggerRoute,
   ApiTrainingSourcesLearnAllRoute: ApiTrainingSourcesLearnAllRoute,
   ApiApiKeysIndexRoute: ApiApiKeysIndexRoute,

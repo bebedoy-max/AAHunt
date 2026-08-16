@@ -44,12 +44,16 @@ export const Route = createFileRoute("/api/research/trigger")({
           if (!job) return json({ error: "Failed to create research job" }, 500);
 
           researchState.running = true;
+          researchState.cancelRequested = false;
+          researchState.currentJobId = job["id"] as number;
           void (async () => {
             try {
               const { runResearchJob } = await import("@/lib/research/gemini-research.server");
               await runResearchJob(job["id"] as number, targets);
             } finally {
               researchState.running = false;
+              researchState.cancelRequested = false;
+              researchState.currentJobId = null;
             }
           })();
 

@@ -1,6 +1,7 @@
 import { geminiGenerate, withTimeout } from "./gemini-model.server";
 import { jsonrepair } from "jsonrepair";
 import { getAdminClient } from "../supabase.server";
+import { researchState, ResearchCancelledError } from "../research-state.server";
 import {
   researchWithTavily, researchWithExa, researchWithFirecrawl,
   researchWithSerper, researchWithPerplexity,
@@ -630,6 +631,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
   const log: string[] = [];
 
   const appendLog = async (msg: string, pct?: number) => {
+    if (researchState.cancelRequested) throw new ResearchCancelledError();
     log.push(`[${new Date().toISOString()}] ${msg}`);
     if (typeof pct === "number") log.push(`@@PROGRESS:${Math.max(0, Math.min(100, Math.round(pct)))}@@`);
     await supabase.from("research_jobs").update({ log: log.join("\n") }).eq("id", jobId);
@@ -982,8 +984,9 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
     }).eq("id", jobId);
 
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    log.push(`[${new Date().toISOString()}] FATAL ERROR: ${errMsg}`);
+    const cancelled = err instanceof ResearchCancelledError;
+    const errMsg = cancelled ? "Research dihentikan oleh user" : err instanceof Error ? err.message : String(err);
+    log.push(`[${new Date().toISOString()}] ${cancelled ? "STOPPED BY USER" : `FATAL ERROR: ${errMsg}`}`);
 
     await supabase.from("research_jobs").update({
       status: "failed",
