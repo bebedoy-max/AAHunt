@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getAdminClient, isSupabaseConfigured } from "@/lib/supabase.server";
 import { json } from "@/lib/api-response.server";
 import { researchState } from "@/lib/research-state.server";
+import { runInBackground } from "@/lib/background-task.server";
 
 const DEFAULT_TARGETS = ["providers", "codes", "content"];
 
@@ -63,14 +64,25 @@ async function runScheduledResearch(request: Request) {
     if (!job) return json({ error: "Failed to create research job" }, 500);
 
     researchState.running = true;
-    void (async () => {
+    researchState.cancelRequested = false;
+    researchState.currentJobId = job["id"] as number;
+    runInBackground((async () => {
       try {
         const { runResearchJob } = await import("@/lib/research/gemini-research.server");
         await runResearchJob(job["id"] as number, DEFAULT_TARGETS);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Scheduled research worker failed to start";
+        await supabase.from("research_jobs").update({
+          status: "failed",
+          completed_at: new Date().toISOString(),
+          error_message: message,
+        }).eq("id", job["id"]);
       } finally {
         researchState.running = false;
+        researchState.cancelRequested = false;
+        researchState.currentJobId = null;
       }
-    })();
+    })());
 
     return json({ started: true, id: job["id"], started_at: startedAt, targets: DEFAULT_TARGETS });
   } catch (err) {

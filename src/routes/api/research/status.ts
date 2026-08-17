@@ -13,6 +13,8 @@ const emptyStatus = {
   log: null,
 };
 
+const STALE_JOB_MS = 60 * 60 * 1000;
+
 export const Route = createFileRoute("/api/research/status")({
   server: {
     handlers: {
@@ -38,6 +40,27 @@ export const Route = createFileRoute("/api/research/status")({
               providers_updated: null,
               error_message: null,
               log: null,
+            });
+          }
+
+          if (
+            (job["status"] === "pending" || job["status"] === "running") &&
+            Date.now() - new Date(job["started_at"] as string).getTime() > STALE_JOB_MS
+          ) {
+            const completedAt = new Date().toISOString();
+            const message = "Research melewati batas waktu 1 jam dan dihentikan otomatis";
+            const previousLog = typeof job["log"] === "string" ? job["log"] : "";
+            const log = `${previousLog}${previousLog ? "\n" : ""}[${completedAt}] FATAL ERROR: ${message}`;
+            await supabase.from("research_jobs").update({
+              status: "failed",
+              completed_at: completedAt,
+              error_message: message,
+              log,
+            }).eq("id", job["id"]);
+            return json({
+              id: job["id"], status: "failed", started_at: job["started_at"],
+              completed_at: completedAt, providers_found: null, providers_updated: null,
+              error_message: message, log, targets: job["targets"] ?? null,
             });
           }
 

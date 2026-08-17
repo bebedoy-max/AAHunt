@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getAdminClient } from "@/lib/supabase.server";
 import { json } from "@/lib/api-response.server";
 import { researchState } from "@/lib/research-state.server";
+import { runInBackground } from "@/lib/background-task.server";
 
 export const Route = createFileRoute("/api/research/trigger")({
   server: {
@@ -46,16 +47,23 @@ export const Route = createFileRoute("/api/research/trigger")({
           researchState.running = true;
           researchState.cancelRequested = false;
           researchState.currentJobId = job["id"] as number;
-          void (async () => {
+          runInBackground((async () => {
             try {
               const { runResearchJob } = await import("@/lib/research/gemini-research.server");
               await runResearchJob(job["id"] as number, targets);
+            } catch (error) {
+              const message = error instanceof Error ? error.message : "Research worker failed to start";
+              await supabase.from("research_jobs").update({
+                status: "failed",
+                completed_at: new Date().toISOString(),
+                error_message: message,
+              }).eq("id", job["id"]);
             } finally {
               researchState.running = false;
               researchState.cancelRequested = false;
               researchState.currentJobId = null;
             }
-          })();
+          })());
 
           return json({
             id: job["id"],

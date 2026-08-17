@@ -632,6 +632,17 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
 
   const appendLog = async (msg: string, pct?: number) => {
     if (researchState.cancelRequested) throw new ResearchCancelledError();
+    const { data: persistedJob } = await supabase
+      .from("research_jobs")
+      .select("status,error_message")
+      .eq("id", jobId)
+      .maybeSingle();
+    if (
+      persistedJob?.["status"] === "failed" &&
+      persistedJob["error_message"] === "Research dihentikan oleh user"
+    ) {
+      throw new ResearchCancelledError();
+    }
     log.push(`[${new Date().toISOString()}] ${msg}`);
     if (typeof pct === "number") log.push(`@@PROGRESS:${Math.max(0, Math.min(100, Math.round(pct)))}@@`);
     await supabase.from("research_jobs").update({ log: log.join("\n") }).eq("id", jobId);
@@ -664,6 +675,8 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
 
     const orderedProviders = await buildFallbackChain(researchProviderOrder);
     const orderedStructureProviders = await buildFallbackChain(structureProviderOrder);
+    const exhaustedResearchKeys = new Set<string>();
+    const exhaustedStructureKeys = new Set<string>();
 
     if (orderedProviders.length === 0) {
       throw new Error("No research provider configured. Add an API key in API Keys settings.");
@@ -701,6 +714,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
         const entry = orderedProviders[i];
         if (!entry) continue;
         const { p, k, label } = entry;
+        if (exhaustedResearchKeys.has(label)) continue;
         try {
           await appendLog(`[${waveLabel}] Trying research key ${i + 1}/${orderedProviders.length}: ${label}...`);
           const text = await withTimeout(
@@ -715,6 +729,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
           await appendLog(`[${waveLabel}] ${label} returned empty — trying next key...`);
         } catch (err) {
           const msg = (err as Error).message.substring(0, 150);
+          if (/429|quota|billing|401|403|invalid.*key/i.test(msg)) exhaustedResearchKeys.add(label);
           await appendLog(`[${waveLabel}] Key ${label} failed: ${msg} — trying next...`);
         }
       }
@@ -773,7 +788,11 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
         let succeeded = false;
         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
           try {
-            const result = await callStructureProvider(p, k, chunk, chunkLabel);
+            const result = await withTimeout(
+              callStructureProvider(p, k, chunk, chunkLabel),
+              120_000,
+              `${p} structure call`,
+            );
             allResults.push(...result);
             succeeded = true;
             break;
@@ -799,6 +818,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
         const entry = orderedStructureProviders[i];
         if (!entry) continue;
         const { p, k, label } = entry;
+        if (exhaustedStructureKeys.has(label)) continue;
         try {
           await appendLog(`[${waveLabel}] Trying structure key ${i + 1}/${orderedStructureProviders.length}: ${label}...`);
           const result = await tryStructureProvider(p, k, researchText, waveLabel);
@@ -809,6 +829,7 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
           await appendLog(`[${waveLabel}] ${label} returned 0 results — trying next key...`);
         } catch (err) {
           const msg = (err as Error).message.substring(0, 150);
+          if (/429|quota|billing|401|403|invalid.*key/i.test(msg)) exhaustedStructureKeys.add(label);
           await appendLog(`[${waveLabel}] Structure key ${label} failed: ${msg} — trying next...`);
         }
       }
@@ -1088,7 +1109,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
       try {
         let text = "";
         if (p === "gemini") {
-          text = await geminiGenerate(k, { prompt, googleSearch: true });
+          text = await withTimeout(geminiGenerate(k, { prompt, googleSearch: true }), 120_000, `${labelKey} code research`);
         } else if (p === "tavily") {
           text = await researchWithTavily(k, queries);
         } else if (p === "exa") {
@@ -1184,7 +1205,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
         await appendLog?.(`Code Research: structuring with ${label}...`);
         let raw = "";
         if (p === "gemini") {
-          raw = await geminiGenerate(k, { prompt: structurePrompt, json: true });
+          raw = await withTimeout(geminiGenerate(k, { prompt: structurePrompt, json: true }), 120_000, `${label} code structure`);
         } else {
           const endpoint =
             p === "openai" ? "https://api.openai.com/v1/chat/completions" :
@@ -1194,7 +1215,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
             p === "openai" ? "gpt-4o-mini" :
             p === "groq" ? "llama-3.3-70b-versatile" :
             "sonar";
-          const res = await fetch(endpoint, {
+          const res = await withTimeout(fetch(endpoint, {
             method: "POST",
             headers: { Authorization: `Bearer ${k}`, "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1203,7 +1224,7 @@ export async function runCodeResearchJob(appendLog?: (msg: string) => Promise<vo
               temperature: 0.1,
               max_tokens: 8192,
             }),
-          });
+          }), 120_000, `${label} code structure`);
           if (!res.ok) throw new Error(`${p} ${res.status}`);
           const jsonRes = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
           raw = jsonRes.choices?.[0]?.message?.content ?? "";

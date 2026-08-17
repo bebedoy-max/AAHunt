@@ -12,22 +12,33 @@ async function stopResearch() {
   }
 
   const supabase = getAdminClient();
-  const { data, error } = await supabase
+  const { data: activeJobs, error: readError } = await supabase
     .from("research_jobs")
-    .update({
-      status: "failed",
-      completed_at: new Date().toISOString(),
-      error_message: "Research dihentikan oleh user",
-    })
-    .in("status", ["pending", "running"])
-    .select("id");
+    .select("id,log")
+    .in("status", ["pending", "running"]);
+  if (readError) return json({ error: readError.message }, 500);
 
-  if (error) return json({ error: error.message }, 500);
+  const stoppedAt = new Date().toISOString();
+  for (const job of activeJobs ?? []) {
+    const previousLog = typeof job["log"] === "string" ? job["log"] : "";
+    const stopLine = `[${stoppedAt}] STOPPED BY USER`;
+    const nextLog = previousLog ? `${previousLog}\n${stopLine}` : stopLine;
+    const { error } = await supabase
+      .from("research_jobs")
+      .update({
+        status: "failed",
+        completed_at: stoppedAt,
+        error_message: "Research dihentikan oleh user",
+        log: nextLog,
+      })
+      .eq("id", job["id"]);
+    if (error) return json({ error: error.message }, 500);
+  }
 
   researchState.running = false;
   researchState.currentJobId = null;
 
-  return json({ stopped: true, jobs_stopped: data?.length ?? 0 });
+  return json({ stopped: true, jobs_stopped: activeJobs?.length ?? 0 });
 }
 
 export const Route = createFileRoute("/api/research/stop")({
