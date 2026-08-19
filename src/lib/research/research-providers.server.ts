@@ -70,7 +70,7 @@ export async function researchWithTavily(
   queries: string[],
 ): Promise<string> {
   const results: string[] = [];
-  for (const query of queries) {
+  for (const query of queries.slice(0, 10)) {
     const res = await fetch("https://api.tavily.com/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -78,7 +78,7 @@ export async function researchWithTavily(
         api_key: apiKey,
         query,
         search_depth: "advanced",
-        max_results: 10,
+        max_results: 6,
         include_answer: true,
       }),
     });
@@ -90,11 +90,11 @@ export async function researchWithTavily(
     if (data.answer) results.push(`Query: ${query}\nAnswer: ${data.answer}`);
     if (data.results) {
       for (const r of data.results) {
-        results.push(`Source: ${r.url}\nTitle: ${r.title}\n${r.content}`);
+        results.push(`Source: ${r.url}\nTitle: ${r.title}\n${(r.content ?? "").slice(0, 1200)}`);
       }
     }
   }
-  return results.join("\n\n---\n\n");
+  return results.join("\n\n---\n\n").slice(0, 70_000);
 }
 
 // ─── Exa research ─────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ export async function researchWithExa(
   queries: string[],
 ): Promise<string> {
   const results: string[] = [];
-  for (const query of queries) {
+  for (const query of queries.slice(0, 10)) {
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: {
@@ -125,7 +125,7 @@ export async function researchWithExa(
       results.push(`Source: ${r.url}\nTitle: ${r.title}\n${r.text ?? ""}`);
     }
   }
-  return results.join("\n\n---\n\n");
+  return results.join("\n\n---\n\n").slice(0, 70_000);
 }
 
 // ─── Firecrawl research ───────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export async function researchWithFirecrawl(
   queries: string[],
 ): Promise<string> {
   const results: string[] = [];
-  for (const query of queries) {
+  for (const query of queries.slice(0, 10)) {
     const res = await fetch("https://api.firecrawl.dev/v1/search", {
       method: "POST",
       headers: {
@@ -153,7 +153,7 @@ export async function researchWithFirecrawl(
       );
     }
   }
-  return results.join("\n\n---\n\n");
+  return results.join("\n\n---\n\n").slice(0, 70_000);
 }
 
 // ─── Serper research ──────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ export async function researchWithSerper(
   queries: string[],
 ): Promise<string> {
   const results: string[] = [];
-  for (const query of queries) {
+  for (const query of queries.slice(0, 10)) {
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
@@ -181,7 +181,7 @@ export async function researchWithSerper(
       results.push(`Source: ${r.link}\nTitle: ${r.title}\n${r.snippet}`);
     }
   }
-  return results.join("\n\n---\n\n");
+  return results.join("\n\n---\n\n").slice(0, 70_000);
 }
 
 // ─── Perplexity research ──────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export async function researchWithPerplexity(
   queries: string[],
 ): Promise<string> {
   const results: string[] = [];
-  for (const query of queries) {
+  for (const query of queries.slice(0, 10)) {
     const res = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
@@ -215,7 +215,7 @@ export async function researchWithPerplexity(
     const content = data.choices?.[0]?.message?.content ?? "";
     if (content) results.push(`Query: ${query}\n${content}`);
   }
-  return results.join("\n\n---\n\n");
+  return results.join("\n\n---\n\n").slice(0, 70_000);
 }
 
 // ─── Perplexity structuring ───────────────────────────────────────────────────
@@ -347,7 +347,7 @@ export async function structureWithGroq(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.3-70b-versatile",
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "Output a JSON object with a 'providers' array." },

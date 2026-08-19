@@ -24,11 +24,15 @@ async function getAllKeysForProvider(provider: string): Promise<ProviderKey[]> {
     const { data, error } = await supabase
       .from("api_keys")
       .select("*")
-      .eq("provider", provider);
+      .eq("provider", provider)
+      .eq("is_active", true);
     if (error || !data) return [];
-    return data
-      .map((r: any) => ({ provider: r.provider, apiKey: r.api_key, label: r.label, isActive: r.is_active }))
-      .sort((a: ProviderKey, b: ProviderKey) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0));
+    return data.map((r: any) => ({
+      provider: r.provider,
+      apiKey: r.api_key,
+      label: r.label,
+      isActive: r.is_active,
+    }));
   } catch {
     return [];
   }
@@ -829,7 +833,9 @@ export async function runResearchJob(jobId: number, targets: string[] = ["provid
           await appendLog(`[${waveLabel}] ${label} returned 0 results — trying next key...`);
         } catch (err) {
           const msg = (err as Error).message.substring(0, 150);
-          if (/429|quota|billing|401|403|invalid.*key/i.test(msg)) exhaustedStructureKeys.add(label);
+          // A provider that cannot structure one representative chunk should
+          // not consume the rest of this finite serverless invocation.
+          exhaustedStructureKeys.add(label);
           await appendLog(`[${waveLabel}] Structure key ${label} failed: ${msg} — trying next...`);
         }
       }
